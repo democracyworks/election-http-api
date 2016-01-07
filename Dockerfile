@@ -10,4 +10,4 @@ RUN lein deps
 COPY . /usr/src/election-http-api
 
 RUN lein test
-RUN lein immutant war --name election-http-api --destination target --nrepl-port=11111 --nrepl-start --nrepl-host=0.0.0.0
+RUN lein immutant war --name election-http-api --destination target --nrepl-port=14567 --nrepl-start --nrepl-host=0.0.0.0
