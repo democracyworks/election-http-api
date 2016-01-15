@@ -7,6 +7,10 @@
 
 (defonce election-upcoming-search (async/chan 1000))
 
+(defonce electorate-search-create (async/chan 1000))
+
 (defn close-all! []
-  (doseq [c [ok-requests ok-responses]]
+  (doseq [c [ok-requests ok-responses
+             election-upcoming-search
+             electorate-search-create]]
     (async/close! c)))
