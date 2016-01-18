@@ -25,7 +25,15 @@
                               "election-works.election.search"
                               (config [:rabbitmq :queues "election-works.election.search"])
                               5000
-                              channels/election-upcoming-search)]
+                              channels/election-upcoming-search)
+                             (wire-up/external-service
+                              connection
+                              ""
+                              "electorate-works.electorate.search-create"
+                              (config [:rabbitmq :queues
+                                       "electorate-works.electorate.search-create"])
+                              5000
+                              channels/electorate-search-create)]
           outgoing-events []]
 
       (wire-up/start-responder! channels/ok-requests
