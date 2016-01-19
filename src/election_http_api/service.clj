@@ -29,13 +29,24 @@
                                                        "application/json"
                                                        "text/plain"])]
      ["/ping" {:get [:ping ping]}]
+     ["/upcoming" ^:constraints {:district-divisions #".+"}
+      {:get [:search-upcoming-by-district-divisions
+             (bifrost/interceptor
+              channels/election-upcoming-search)]}
+      ^:interceptors [(bifrost.i/update-in-request
+                       [:query-params :district-divisions]
+                       #(-> %
+                            (str/split #",")
+                            vec))
+                      (bifrost.i/update-in-response
+                       [:body :elections] [:body] identity)]]
      ["/upcoming" ^:constraints {:user-id #".+"}
       {:get [:search-upcoming-by-user-id
              (bifrost/interceptor
               channels/electorate-search-create)]}
       ^:interceptors [(bifrost.i/update-in-request
                        [:query-params :user-id]
-                       #(java.util.UUID/fromString %))
+                       #(when % (java.util.UUID/fromString %)))
                       (bifrost.i/update-in-response
                        [:body :electorates] [:body] identity)]]]]])
 
