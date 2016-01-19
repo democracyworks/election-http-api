@@ -68,26 +68,6 @@
                              :electorates #{}})))
 
 (deftest upcoming-test
-  (testing "/upcoming?district-divisions=... responds with elections when found"
-    (async/take! channels/election-upcoming-search
-                 test-election-works-upcoming-response)
-    (let [response (http/get
-                    (str root-url "/upcoming")
-                    {:query-params
-                     {:district-divisions
-                      (str/join "," #{co-ocd-id denver-ocd-id})}})]
-      (is (= 200 (:status response)))
-      (is (= #{denver-election}
-             (edn/read-string (:body response))))))
-  (testing "/upcoming?district-divisions=... with no elections returns empty success result"
-    (async/take! channels/election-upcoming-search
-                 test-election-works-upcoming-response)
-    (let [response (http/get
-                    (str root-url "/upcoming")
-                    {:query-params
-                     {:district-divisions co-ocd-id}})]
-      (is (= 200 (:status response)))
-      (is (empty? (edn/read-string (:body response))))))
   (testing "/upcoming?user-id=... responds with elections when found"
     (async/take! channels/electorate-search-create
                  test-electorate-works-upcoming-response)
