@@ -6,12 +6,14 @@
             [ring.util.response :as ring-resp]
             [turbovote.resource-config :refer [config]]
             [pedestal-toolbox.params :refer :all]
+            [pedestal-toolbox.cors :as cors]
             [pedestal-toolbox.content-negotiation :refer :all]
             [kehaar.core :as k]
             [clojure.core.async :refer [go alt! timeout]]
             [bifrost.core :as bifrost]
             [bifrost.interceptors :as bifrost.i]
             [election-http-api.channels :as channels]
+            [clojure.tools.logging :as log]
             [clojure.string :as str]))
 
 (def ping
@@ -51,13 +53,14 @@
                        [:body :electorates] [:body] identity)]]]]])
 
 (defn service []
-  {::env :prod
-   ::bootstrap/router :linear-search
-   ::bootstrap/routes routes
-   ::bootstrap/resource-path "/public"
-   ::bootstrap/allowed-origins (if (= :all (config [:server :allowed-origins]))
-                                 (constantly true)
-                                 (config [:server :allowed-origins]))
-   ::bootstrap/host (config [:server :hostname])
-   ::bootstrap/type :immutant
-   ::bootstrap/port (config [:server :port])})
+  (let [allowed-origins (config [:server :allowed-origins])]
+    (log/debug "Allowed Origins Config: " (pr-str allowed-origins))
+    {::env :prod
+     ::bootstrap/router :linear-search
+     ::bootstrap/routes routes
+     ::bootstrap/resource-path "/public"
+     ::bootstrap/allowed-origins (cors/domain-matcher-fn
+                                  (map re-pattern allowed-origins))
+     ::bootstrap/host (config [:server :hostname])
+     ::bootstrap/type :immutant
+     ::bootstrap/port (config [:server :port])}))
