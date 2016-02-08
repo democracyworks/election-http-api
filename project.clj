@@ -19,7 +19,7 @@
 
                  [io.pedestal/pedestal.service "0.4.1"]
                  [io.pedestal/pedestal.service-tools "0.4.1"]
-                 [democracyworks/pedestal-toolbox "0.6.2"]
+                 [democracyworks/pedestal-toolbox "0.7.0"]
                  [org.immutant/web "2.1.1"]
                  [io.pedestal/pedestal.immutant "0.4.1"]
                  [org.immutant/core "2.1.1"]
