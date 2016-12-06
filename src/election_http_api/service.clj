@@ -34,7 +34,7 @@
      ["/upcoming" ^:constraints {:district-divisions #".+"}
       {:get [:search-upcoming-by-district-divisions
              (bifrost/interceptor
-              channels/election-upcoming-search)]}
+              channels/election-upcoming-search 60000)]}
       ^:interceptors [(bifrost.i/update-in-request
                        [:query-params :district-divisions]
                        #(-> %
@@ -45,7 +45,7 @@
      ["/upcoming" ^:constraints {:user-id #".+"}
       {:get [:search-upcoming-by-user-id
              (bifrost/interceptor
-              channels/electorate-search-create)]}
+              channels/electorate-search-create 60000)]}
       ^:interceptors [(bifrost.i/update-in-request
                        [:query-params :user-id]
                        #(when % (java.util.UUID/fromString %)))
