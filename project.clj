@@ -26,7 +26,6 @@
                  [democracyworks/bifrost "0.1.5"]]
   :plugins [[lein-immutant "2.1.0"]]
   :main ^:skip-aot election-http-api.server
-  :target-path "target/%s"
   :uberjar-name "election-http-api.jar"
   :profiles {:uberjar {:aot :all}
              :dev {:resource-paths ["dev-resources"]}
