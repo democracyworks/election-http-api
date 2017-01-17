@@ -11,10 +11,10 @@
   <logger name="org.quartz.core.SchedulerSignalerImpl" level="WARN"/>
   <logger name="org.xnio" level="WARN"/>
 
-  <logger name="datomic" level="WARN"/>
+  <logger name="datomic" level="${log-level:-WARN}"/>
   <logger name="election-http-api" level="${log-level:-DEBUG}"/>
 
-  <root level="INFO">
+  <root level="${log-level:-INFO}">
     <appender-ref ref="Console"/>
   </root>
 </configuration>

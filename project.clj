@@ -35,4 +35,4 @@
   :profiles {:uberjar {:aot :all}
              :dev {:resource-paths ["dev-resources"]}
              :test {:dependencies [[clj-http "3.1.0"]]
-                    :jvm-opts ["-Dlog-level=INFO"]}})
+                    :jvm-opts ["-Dlog-level=OFF"]}})
