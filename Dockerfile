@@ -14,4 +14,4 @@ COPY . /usr/src/election-http-api
 RUN lein with-profiles $env,test test
 RUN lein with-profile $env uberjar
 
-CMD ["java", "-jar", "target/election-http-api.jar"]
+CMD ["java", "-javaagent:resources/jars/com.newrelic.agent.java/newrelic-agent.jar", "-jar", "target/election-http-api.jar"]
