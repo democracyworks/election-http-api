@@ -15,7 +15,12 @@
                        :channel election-http-api.channels/election-upcoming-search
                        :response true
                        :timeout 60000}
+                      {:queue "election-works.election.upcoming"
+                       :channel election-http-api.channels/election-all-upcoming
+                       :response true
+                       :timeout 60000}
                       {:queue "electorate-works.electorate.search-create"
                        :channel election-http-api.channels/electorate-search-create
                        :response true
                        :timeout 60000}]}}}
+

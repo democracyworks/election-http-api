@@ -51,6 +51,10 @@
                                            :elections #{denver-election}})
     (async/put! response-ch {:status :ok, :elections #{}})))
 
+(defn test-election-works-all-upcoming-response
+  [[response-ch _]]
+  (async/put! response-ch {:status :ok, :elections #{denver-election}}))
+
 (def test-user-1
   {:id #uuid "a9acf0fb-5e74-4afb-822a-0078aec27e37"})
 
@@ -101,7 +105,16 @@
                 :election-authority {}
                 :voter-registration-authority {}}}
              (edn/read-string (:body response))))))
-  (testing "/upcoming with no query params returns 404"
+  (testing "/upcoming with no query params & no API gateway header returns 403"
     (let [response (http/get (str root-url "/upcoming")
                              {:throw-exceptions false})]
-      (is (= 404 (:status response))))))
+      (is (= 403 (:status response)))))
+  (testing "/upcoming with no query params & API gateway header returns all upcoming elections"
+    (async/take! channels/election-all-upcoming
+                 test-election-works-all-upcoming-response)
+    (let [response (http/get (str root-url "/upcoming")
+                             {:headers {"X-3scale-proxy-secret-token"
+                                        "api-gateway-test-secret"}})]
+      (is (= 200 (:status response)))
+      (is (= #{denver-election}
+             (edn/read-string (:body response)))))))

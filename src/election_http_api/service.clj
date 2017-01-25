@@ -14,7 +14,8 @@
             [bifrost.interceptors :as bifrost.i]
             [election-http-api.channels :as channels]
             [clojure.tools.logging :as log]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:import (java.util UUID)))
 
 (def ping
   (interceptor
@@ -22,9 +23,39 @@
     (fn [ctx]
       (assoc ctx :response (ring-resp/response "OK")))}))
 
+(def strip-user-key
+  (interceptor
+   {:enter
+    (fn [ctx]
+      (update-in ctx [:request :query-params] dissoc "user-key"))}))
+
+(def ensure-api-gateway-request
+  (interceptor
+   {:enter
+    (let [api-gateway-secret (or (config [:api-gateway-secret]
+                                         "api-gateway-test-secret")
+                                 "api-gateway-test-secret")]
+      (fn [{:keys [request] :as ctx}]
+        (if (= api-gateway-secret
+               (get-in request [:headers "x-3scale-proxy-secret-token"]))
+          ctx
+          (assoc ctx :response {:status 403
+                                :headers {}
+                                :body "Not authorized"}))))}))
+
+(defn promote-to-body
+  "Returns a leave interceptor that pulls `response-key` out of the response
+  and promotes its value as the new response body. For example:
+  (promote-to-body :foo) will return an interceptor that converts this
+  response: {:foo {:other \"stuff\"}}
+  to this response: {:other \"stuff\"}"
+  [response-key]
+  (bifrost.i/update-in-response [:body response-key] [:body] identity))
+
 (defroutes routes
   [[["/"
-     ^:interceptors [(body-params)
+     ^:interceptors [strip-user-key
+                     (body-params)
                      (negotiate-response-content-type ["application/edn"
                                                        "application/transit+json"
                                                        "application/transit+msgpack"
@@ -40,17 +71,21 @@
                        #(-> %
                             (str/split #",")
                             vec))
-                      (bifrost.i/update-in-response
-                       [:body :elections] [:body] identity)]]
+                      (promote-to-body :elections)]]
      ["/upcoming" ^:constraints {:user-id #".+"}
       {:get [:search-upcoming-by-user-id
              (bifrost/interceptor
               channels/electorate-search-create 60000)]}
       ^:interceptors [(bifrost.i/update-in-request
                        [:query-params :user-id]
-                       #(when % (java.util.UUID/fromString %)))
-                      (bifrost.i/update-in-response
-                       [:body :electorates] [:body] identity)]]]]])
+                       #(when % (UUID/fromString %)))
+                      (promote-to-body :electorates)]]
+     ["/upcoming"
+      {:get [:all-upcoming
+             (bifrost/interceptor
+              channels/election-all-upcoming 60000)]}
+      ^:interceptors [ensure-api-gateway-request
+                      (promote-to-body :elections)]]]]])
 
 (defn service []
   (let [allowed-origins (config [:server :allowed-origins])]
