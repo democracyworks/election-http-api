@@ -8,6 +8,7 @@ services:
       ALLOWED_ORIGINS: '[".*"]'
       RABBITMQ_PORT_5672_TCP_ADDR: rabbitmq
       RABBITMQ_PORT_5672_TCP_PORT: 5672
+      API_GATEWAY_SECRET:
     ports:
       - "58080:8080"
   election-works:

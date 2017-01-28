@@ -22,5 +22,6 @@
                       {:queue "electorate-works.electorate.search-create"
                        :channel election-http-api.channels/electorate-search-create
                        :response true
-                       :timeout 60000}]}}}
+                       :timeout 60000}]}}
+ :api-gateway-secret #resource-config/env "API_GATEWAY_SECRET"}
 
