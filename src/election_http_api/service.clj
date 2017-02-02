@@ -14,13 +14,53 @@
             [bifrost.interceptors :as bifrost.i]
             [election-http-api.channels :as channels]
             [clojure.tools.logging :as log]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [election-http-api.three-scale :as ts])
+  (:import (threescale.v3.api ServerError)))
 
 (def ping
   (interceptor
    {:enter
     (fn [ctx]
       (assoc ctx :response (ring-resp/response "OK")))}))
+
+(def strip-user-key
+  (interceptor
+   {:enter
+    (fn [ctx]
+      (update-in ctx [:request :query-params] dissoc "user-key"))}))
+
+(defn promote-to-body
+  "Returns a leave interceptor that pulls `response-key` out of the response
+  and promotes its value as the new response body. For example:
+  (promote-to-body :foo) will return an interceptor that converts this
+  response: {:foo {:other \"stuff\"}}
+  to this response: {:other \"stuff\"}"
+  [response-key]
+  (bifrost.i/update-in-response [:body response-key] [:body] identity))
+
+(defn assoc-response [ctx status body]
+  (assoc ctx :response {:status status
+                        :headers {}
+                        :body body}))
+
+(def authorize-api-request
+  (interceptor
+   {:enter
+    (fn [{:keys [request] :as ctx}]
+      (if (get-in request [:query-params :user-key])
+        (let [authorization (ts/authorize-request request)]
+          (case (::ts/status authorization)
+            ::ts/authorized ctx
+            ::ts/not-authorized (assoc-response
+                                 ctx
+                                 403
+                                 {:message
+                                  (::ts/message authorization)})
+            ::ts/error (assoc-response ctx 500 {:message
+                                                (::ts/message authorization)})
+            (assoc-response ctx 500 {:message "Unknown auth error"})))
+        (assoc-response ctx 403 {:message "user-key query param missing"})))}))
 
 (defroutes routes
   [[["/"
@@ -40,8 +80,7 @@
                        #(-> %
                             (str/split #",")
                             vec))
-                      (bifrost.i/update-in-response
-                       [:body :elections] [:body] identity)]]
+                      (promote-to-body :elections)]]
      ["/upcoming" ^:constraints {:user-id #".+"}
       {:get [:search-upcoming-by-user-id
              (bifrost/interceptor
@@ -49,8 +88,14 @@
       ^:interceptors [(bifrost.i/update-in-request
                        [:query-params :user-id]
                        #(when % (java.util.UUID/fromString %)))
-                      (bifrost.i/update-in-response
-                       [:body :electorates] [:body] identity)]]]]])
+                      (promote-to-body :electorates)]]
+     ["/upcoming"
+      {:get [:all-upcoming
+             (bifrost/interceptor
+              channels/election-all-upcoming 60000)]}
+      ^:interceptors [authorize-api-request
+                      strip-user-key
+                      (promote-to-body :elections)]]]]])
 
 (defn service []
   (let [allowed-origins (config [:server :allowed-origins])]
