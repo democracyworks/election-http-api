@@ -8,18 +8,14 @@
                  [turbovote.resource-config "0.2.1"]
                  [com.novemberain/langohr "3.7.0"]
                  [prismatic/schema "1.1.3"]
-                 [ch.qos.logback/logback-classic "1.1.9"]
+                 [ch.qos.logback/logback-classic "1.1.10"]
 
                  ;; core.async has to come before pedestal or kehaar.wire-up will
                  ;; not compile. Something to do with the try-catch in
                  ;; kehaar.core/go-handler. (This may not be true anymore in
                  ;; core.async 0.2.x; need to test.)
                  [org.clojure/core.async "0.2.395"]
-                 <<<<<<< HEAD
                  [democracyworks/kehaar "0.9.0"]
-                 =======
-                 [democracyworks/kehaar "0.8.1"]
-                 >>>>>>> Update deps
 
                  [io.pedestal/pedestal.service "0.5.2"]
                  [io.pedestal/pedestal.service-tools "0.5.2"]
@@ -30,7 +26,7 @@
                  [democracyworks/bifrost "0.1.5"]
                  [~(symbol "net.3scale" "3scale-api") "3.0.2"]] ; ewww, but symbols can't start w/ a 3
   :plugins [[lein-immutant "2.1.0"]
-            [com.carouselapps/jar-copier "0.3.1"]]
+            [com.pupeno/jar-copier "0.4.0"]]
   :java-agents [[com.newrelic.agent.java/newrelic-agent "3.35.1"]]
   :jar-copier {:java-agents true
                :destination "resources/jars"}
