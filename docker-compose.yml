@@ -1,23 +1,43 @@
-app:
-  build: .
-  links:
-    - rabbitmq
-    - wildfly
-  environment:
-    ALLOWED_ORIGINS: '[".*"]'
-wildfly:
-  image: quay.io/democracyworks/wildfly:9.0.2.Final-debug
-  links:
-    - rabbitmq
-  ports:
-    - "59990:9990"
-    - "58080:8080"
-  environment:
-    ADMIN_USERNAME: admin
-    ADMIN_PASSWORD: admin
-rabbitmq:
-  image: rabbitmq:3.5.3-management
-  ports:
-    - "45672:5672"
-    - "55672:15672"
-  hostname: rabbitmq
+version: '3'
+services:
+  election-http-api:
+    build: .
+    depends_on:
+      - rabbitmq
+    environment:
+      ALLOWED_ORIGINS: '[".*"]'
+      RABBITMQ_PORT_5672_TCP_ADDR: rabbitmq
+      RABBITMQ_PORT_5672_TCP_PORT: 5672
+      3SCALE_PROVIDER_KEY:
+      3SCALE_SERVICE_ID:
+    ports:
+      - "58080:8080"
+  election-works:
+    image: quay.io/democracyworks/election-works:tvprod
+    depends_on:
+      - rabbitmq
+      - datomic
+    environment:
+      ELECTION_WORKS_DATOMIC_URI: "datomic:dev://datomic:4334/election-works"
+      INITIALIZE_DATOMIC: "true"
+      RABBITMQ_PORT_5672_TCP_ADDR: rabbitmq
+      RABBITMQ_PORT_5672_TCP_PORT: 5672
+      ELECTION_WORKS_ELECTION_READ_THREADS: 2
+      ELECTION_WORKS_ELECTION_UPCOMING_THREADS: 2
+      ELECTION_WORKS_ELECTION_CREATE_THREADS: 2
+      ELECTION_WORKS_ELECTION_UPDATE_THREADS: 2
+      ELECTION_WORKS_ELECTION_DELETE_THREADS: 2
+      ELECTION_WORKS_ELECTION_SEARCH_THREADS: 2
+  rabbitmq:
+    image: rabbitmq:3.6.5-management
+    ports:
+      - "45672:5672"
+      - "55672:15672"
+    hostname: rabbitmq
+  datomic:
+    image: quay.io/democracyworks/datomic-tx:0.9.5544
+    ports:
+      - "4334:4334"
+      - "4335:4335"
+      - "4336:4336"
+    hostname: datomic
