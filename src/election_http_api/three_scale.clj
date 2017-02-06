@@ -1,5 +1,6 @@
 (ns election-http-api.three-scale
-  (:require [turbovote.resource-config :refer [config]])
+  (:require [turbovote.resource-config :refer [config]]
+            [clojure.tools.logging :as log])
   (:import (threescale.v3.api ParameterMap AuthorizeResponse ServerError)
            (threescale.v3.api.impl ServiceApiDriver)))
 
@@ -10,6 +11,7 @@
   (.getReason three-scale-response))
 
 (defn authorize-request [{{:keys [user-key]} :query-params}]
+  (log/debug "Authorizing API request for user-key" user-key)
   (let [provider-key (config [:3scale :provider-key])
         service-id (config [:3scale :service-id])
         service-api (ServiceApiDriver. provider-key)
