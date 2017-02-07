@@ -23,5 +23,5 @@
                        :channel election-http-api.channels/electorate-search-create
                        :response true
                        :timeout 60000}]}}
- :3scale {:provider-key #resource-config/env "3SCALE_PROVIDER_KEY"
+ :3scale {:service-token #resource-config/env "3SCALE_SERVICE_TOKEN"
           :service-id #resource-config/env "3SCALE_SERVICE_ID"}}

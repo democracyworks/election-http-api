@@ -8,7 +8,7 @@ services:
       ALLOWED_ORIGINS: '[".*"]'
       RABBITMQ_PORT_5672_TCP_ADDR: rabbitmq
       RABBITMQ_PORT_5672_TCP_PORT: 5672
-      3SCALE_PROVIDER_KEY:
+      3SCALE_SERVICE_TOKEN:
       3SCALE_SERVICE_ID:
     ports:
       - "58080:8080"

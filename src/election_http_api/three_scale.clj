@@ -12,17 +12,16 @@
 
 (defn authorize-request [{{:keys [user-key]} :query-params}]
   (log/debug "Authorizing API request for user-key" user-key)
-  (let [provider-key (config [:3scale :provider-key])
+  (let [service-token (config [:3scale :service-token])
         service-id (config [:3scale :service-id])
-        service-api (ServiceApiDriver. provider-key)
+        service-api (ServiceApiDriver/createApi)
         usage (doto (ParameterMap.)
                 (.add "hits" "1"))
         params (doto (ParameterMap.)
                  (.add "user_key" ^String user-key)
-                 (.add "service_id" ^String service-id)
                  (.add "usage" usage))]
     (try
-      (let [response (.authrep service-api params)]
+      (let [response (.authrep service-api service-token service-id params)]
         (if (authorized? response)
           {::status ::authorized
            ::auth-response response}
