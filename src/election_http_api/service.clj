@@ -15,8 +15,7 @@
             [election-http-api.channels :as channels]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
-            [election-http-api.three-scale :as ts])
-  (:import (threescale.v3.api ServerError)))
+            [election-http-api.three-scale :as ts]))
 
 (def ping
   (interceptor

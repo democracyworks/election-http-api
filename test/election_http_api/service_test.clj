@@ -9,8 +9,7 @@
             [clojure.test :refer :all]
             [clojure.string :as str]
             [clj-time.core :as t]
-            [clj-time.coerce :as tc])
-  (:import (threescale.v3.api ServerError)))
+            [clj-time.coerce :as tc]))
 
 (def test-server-port 56000) ; FIXME: Pick a port unique to this project
 
