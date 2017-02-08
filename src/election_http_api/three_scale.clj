@@ -4,6 +4,8 @@
   (:import (threescale.v3.api ParameterMap AuthorizeResponse ServerError)
            (threescale.v3.api.impl ServiceApiDriver)))
 
+(def api-client (ServiceApiDriver/createApi))
+
 (defn authorized? [^AuthorizeResponse three-scale-response]
   (.success three-scale-response))
 
@@ -14,14 +16,13 @@
   (log/debug "Authorizing API request for user-key" user-key)
   (let [service-token (config [:3scale :service-token])
         service-id (config [:3scale :service-id])
-        service-api (ServiceApiDriver/createApi)
         usage (doto (ParameterMap.)
                 (.add "hits" "1"))
         params (doto (ParameterMap.)
                  (.add "user_key" ^String user-key)
                  (.add "usage" usage))]
     (try
-      (let [response (.authrep service-api service-token service-id params)]
+      (let [response (.authrep api-client service-token service-id params)]
         (if (authorized? response)
           {::status ::authorized
            ::auth-response response}
