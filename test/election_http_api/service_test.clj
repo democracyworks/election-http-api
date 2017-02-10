@@ -1,6 +1,7 @@
 (ns election-http-api.service-test
   (:require [election-http-api.server :as server]
             [election-http-api.channels :as channels]
+            [election-http-api.three-scale :as ts]
             [clj-http.client :as http]
             [clojure.edn :as edn]
             [cognitect.transit :as transit]
@@ -50,6 +51,10 @@
     denver-ocd-id (async/put! response-ch {:status :ok
                                            :elections #{denver-election}})
     (async/put! response-ch {:status :ok, :elections #{}})))
+
+(defn test-election-works-all-upcoming-response
+  [[response-ch _]]
+  (async/put! response-ch {:status :ok, :elections #{denver-election}}))
 
 (def test-user-1
   {:id #uuid "a9acf0fb-5e74-4afb-822a-0078aec27e37"})
@@ -101,7 +106,49 @@
                 :election-authority {}
                 :voter-registration-authority {}}}
              (edn/read-string (:body response))))))
-  (testing "/upcoming with no query params returns 404"
+  (testing "/upcoming with no query params returns 403"
     (let [response (http/get (str root-url "/upcoming")
                              {:throw-exceptions false})]
-      (is (= 404 (:status response))))))
+      (is (= 403 (:status response)))))
+  (testing "/upcoming with valid user-key returns all upcoming elections"
+    (async/take! channels/election-all-upcoming
+                 test-election-works-all-upcoming-response)
+    (with-redefs [ts/authorize-request
+                  (fn [req]
+                    (when (= (get-in req [:query-params :user-key])
+                             "totally-valid")
+                      {::ts/status ::ts/authorized}))]
+      (let [response (http/get (str root-url "/upcoming")
+                               {:query-params
+                                {:user-key "totally-valid"}})]
+        (is (= 200 (:status response)))
+        (is (= #{denver-election}
+               (edn/read-string (:body response)))))))
+  (testing "/upcoming with not-authorized response from 3scale returns 403"
+    (with-redefs [ts/authorize-request (constantly
+                                        {::ts/status ::ts/not-authorized
+                                         ::ts/message "expected failure"})]
+      (let [response (http/get (str root-url "/upcoming")
+                               {:query-params
+                                {:user-key "totally-valid"}
+                                :throw-exceptions false})]
+        (is (= 403 (:status response)))
+        (is (= "expected failure"
+               (-> response
+                   :body
+                   edn/read-string
+                   :message))))))
+  (testing "/upcoming with auth error responds with 500"
+    (with-redefs [ts/authorize-request (constantly
+                                        {::ts/status ::ts/error
+                                         ::ts/message "expected error"})]
+      (let [response (http/get (str root-url "/upcoming")
+                               {:query-params
+                                {:user-key "totally-valid"}
+                                :throw-exceptions false})]
+        (is (= 500 (:status response)))
+        (is (= "expected error"
+               (-> response
+                   :body
+                   edn/read-string
+                   :message)))))))

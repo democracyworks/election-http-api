@@ -15,7 +15,13 @@
                        :channel election-http-api.channels/election-upcoming-search
                        :response true
                        :timeout 60000}
+                      {:queue "election-works.election.upcoming"
+                       :channel election-http-api.channels/election-all-upcoming
+                       :response true
+                       :timeout 60000}
                       {:queue "electorate-works.electorate.search-create"
                        :channel election-http-api.channels/electorate-search-create
                        :response true
-                       :timeout 60000}]}}}
+                       :timeout 60000}]}}
+ :3scale {:service-token #resource-config/env "3SCALE_SERVICE_TOKEN"
+          :service-id #resource-config/env "3SCALE_SERVICE_ID"}}

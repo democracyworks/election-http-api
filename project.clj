@@ -23,7 +23,8 @@
                  [org.immutant/web "2.1.6"]
                  [io.pedestal/pedestal.immutant "0.5.2"]
                  [org.immutant/core "2.1.6"]
-                 [democracyworks/bifrost "0.1.5"]]
+                 [democracyworks/bifrost "0.1.5"]
+                 [~(symbol "net.3scale" "3scale-api") "3.0.3"]] ; ewww, but symbols can't start w/ a 3
   :plugins [[lein-immutant "2.1.0"]
             [com.pupeno/jar-copier "0.4.0"]]
   :java-agents [[com.newrelic.agent.java/newrelic-agent "3.35.1"]]
