@@ -47,20 +47,16 @@
   (interceptor
    {:enter
     (fn [{:keys [request] :as ctx}]
-      (if (get-in request [:query-params :user-key])
-        (let [authorization (ts/authorize-request request)]
-          (log/debug "3scale API authorization response:" (pr-str authorization))
-          (case (::ts/status authorization)
-            ::ts/authorized ctx
-            ::ts/not-authorized (assoc-response
-                                 ctx
-                                 403
-                                 {:message
-                                  (::ts/message authorization)})
-            ::ts/error (assoc-response ctx 500 {:message
-                                                (::ts/message authorization)})
-            (assoc-response ctx 500 {:message "Unknown auth error"})))
-        (assoc-response ctx 403 {:message "user-key query param missing"})))}))
+      (let [authorization (ts/authorize-request request)]
+        (log/debug "3scale API authorization response:" (pr-str authorization))
+        (case (::ts/status authorization)
+          ::ts/authorized ctx
+          ::ts/not-authorized (assoc-response ctx 403
+                                              {:message
+                                               (::ts/message authorization)})
+          ::ts/error (assoc-response ctx 500
+                                     {:message (::ts/message authorization)})
+          (assoc-response ctx 500 {:message "Unknown auth error"}))))}))
 
 (defroutes routes
   [[["/"
