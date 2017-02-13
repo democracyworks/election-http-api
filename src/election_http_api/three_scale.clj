@@ -12,23 +12,29 @@
 (defn failure-reason [^AuthorizeResponse three-scale-response]
   (.getReason three-scale-response))
 
-(defn authorize-request [{{:keys [user-key]} :query-params}]
-  (log/debug "Authorizing API request for user-key" user-key)
-  (let [service-token (config [:3scale :service-token])
-        service-id (config [:3scale :service-id])
-        usage (doto (ParameterMap.)
-                (.add "hits" "1"))
-        params (doto (ParameterMap.)
-                 (.add "user_key" ^String user-key)
-                 (.add "usage" usage))]
-    (try
-      (let [response (.authrep api-client service-token service-id params)]
-        (if (authorized? response)
-          {::status ::authorized
-           ::auth-response response}
-          {::status ::not-authorized
-           ::message (failure-reason response)
-           ::auth-response response}))
-      (catch ServerError error
-        {::status ::error
-         ::message (.getMessage error)}))))
+(defn authorize-request [{:keys [headers] :as request}]
+  (if-let [user-key (some-> headers
+                            (get "authorization")
+                            (->> (re-matches #"(?i)\Aapikey\s+(.+)\z"))
+                            last)]
+    (let [service-token (config [:3scale :service-token])
+          service-id (config [:3scale :service-id])
+          usage (doto (ParameterMap.)
+                  (.add "hits" "1"))
+          params (doto (ParameterMap.)
+                   (.add "user_key" ^String user-key)
+                   (.add "usage" usage))]
+      (log/debug "Authorizing API request for user-key" user-key)
+      (try
+        (let [response (.authrep api-client service-token service-id params)]
+          (if (authorized? response)
+            {::status ::authorized
+             ::auth-response response}
+            {::status ::not-authorized
+             ::message (failure-reason response)
+             ::auth-response response}))
+        (catch ServerError error
+          {::status ::error
+           ::message (.getMessage error)})))
+    {::status ::not-authorized
+     ::message "Missing Authorization apikey header"}))
