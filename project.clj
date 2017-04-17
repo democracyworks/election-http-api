@@ -7,15 +7,15 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [turbovote.resource-config "0.2.1"]
                  [com.novemberain/langohr "3.7.0"]
-                 [prismatic/schema "1.1.3"]
-                 [ch.qos.logback/logback-classic "1.1.10"]
+                 [prismatic/schema "1.1.5"]
+                 [ch.qos.logback/logback-classic "1.2.3"]
 
                  ;; core.async has to come before pedestal or kehaar.wire-up will
                  ;; not compile. Something to do with the try-catch in
                  ;; kehaar.core/go-handler. (This may not be true anymore in
                  ;; core.async 0.2.x; need to test.)
-                 [org.clojure/core.async "0.2.395"]
-                 [democracyworks/kehaar "0.9.0"]
+                 [org.clojure/core.async "0.3.442"]
+                 [democracyworks/kehaar "0.10.1"]
 
                  [io.pedestal/pedestal.service "0.5.2"]
                  [io.pedestal/pedestal.service-tools "0.5.2"]
@@ -35,5 +35,5 @@
   :uberjar-name "election-http-api.jar"
   :profiles {:uberjar {:aot :all}
              :dev {:resource-paths ["dev-resources"]}
-             :test {:dependencies [[clj-http "3.4.1"]]
+             :test {:dependencies [[clj-http "3.5.0"]]
                     :jvm-opts ["-Dlog-level=OFF"]}})
