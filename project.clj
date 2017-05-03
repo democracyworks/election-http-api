@@ -15,7 +15,7 @@
                  ;; kehaar.core/go-handler. (This may not be true anymore in
                  ;; core.async 0.2.x; need to test.)
                  [org.clojure/core.async "0.3.442"]
-                 [democracyworks/kehaar "0.10.1"]
+                 [democracyworks/kehaar "0.10.3"]
 
                  [io.pedestal/pedestal.service "0.5.2"]
                  [io.pedestal/pedestal.service-tools "0.5.2"]
