@@ -91,7 +91,13 @@
               channels/election-all-upcoming 60000)]}
       ^:interceptors [authorize-api-request
                       strip-user-key
-                      (promote-to-body :elections)]]]]])
+                      (promote-to-body :elections)]]
+
+     ["/elections"
+      {:get [:all-elections
+             (bifrost/interceptor
+              channels/election-all 60000)]}
+      ^:interceptors [(promote-to-body :elections)]]]]])
 
 (defn service []
   (let [allowed-origins (config [:server :allowed-origins])]

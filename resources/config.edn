@@ -15,6 +15,10 @@
                        :channel election-http-api.channels/election-upcoming-search
                        :response true
                        :timeout 60000}
+                      {:queue "election-works.election.all"
+                       :channel election-http-api.channels/election-all
+                       :response true
+                       :timeout 60000}
                       {:queue "election-works.election.upcoming"
                        :channel election-http-api.channels/election-all-upcoming
                        :response true

@@ -38,6 +38,13 @@
 
 (def co-ocd-id "ocd-division/country:us/state:co")
 
+(def chaffee-ocd-id (str co-ocd-id "/county:chaffee"))
+
+(def chaffee-election (test-election chaffee-ocd-id
+                                     (-> (t/today)
+                                         (t/minus (t/days 30))
+                                         tc/to-date)))
+
 (def denver-ocd-id (str co-ocd-id "/county:denver"))
 
 (def denver-election (test-election denver-ocd-id
@@ -55,6 +62,12 @@
 (defn test-election-works-all-upcoming-response
   [[response-ch _]]
   (async/put! response-ch {:status :ok, :elections #{denver-election}}))
+
+(defn test-election-works-all-response
+  [[response-ch _]]
+  (async/put! response-ch {:status :ok
+                           :elections #{chaffee-election
+                                        denver-election}}))
 
 (def test-user-1
   {:id #uuid "a9acf0fb-5e74-4afb-822a-0078aec27e37"})
@@ -152,3 +165,14 @@
                    :body
                    edn/read-string
                    :message)))))))
+
+(deftest elections-test
+  (testing "/elections responds with elections when found"
+    (async/take! channels/election-all
+                 test-election-works-all-response)
+    (let [response (http/get
+                    (str root-url "/elections")
+                    {:throw-exceptions false})]
+      (is (= 200 (:status response)))
+      (is (= #{denver-election chaffee-election}
+             (edn/read-string (:body response)))))))
