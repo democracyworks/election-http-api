@@ -167,11 +167,11 @@
                    :message)))))))
 
 (deftest elections-test
-  (testing "/elections responds with elections when found"
+  (testing "/ responds with elections when found"
     (async/take! channels/election-all
                  test-election-works-all-response)
     (let [response (http/get
-                    (str root-url "/elections")
+                    (str root-url "/")
                     {:throw-exceptions false})]
       (is (= 200 (:status response)))
       (is (= #{denver-election chaffee-election}

@@ -15,7 +15,8 @@
             [election-http-api.channels :as channels]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
-            [election-http-api.three-scale :as ts]))
+            [election-http-api.three-scale :as ts])
+  (:import (java.util UUID)))
 
 (def ping
   (interceptor
@@ -31,12 +32,24 @@
 
 (defn promote-to-body
   "Returns a leave interceptor that pulls `response-key` out of the response
-  and promotes its value as the new response body. For example:
+  body and promotes its value as the new response body for successful responses
+  (i.e. status is in the 200's). It leaves other responses alone.
+
+  For example:
   (promote-to-body :foo) will return an interceptor that converts this
   response: {:foo {:other \"stuff\"}}
   to this response: {:other \"stuff\"}"
   [response-key]
-  (bifrost.i/update-in-response [:body response-key] [:body] identity))
+  (interceptor
+   {:leave
+    (fn [ctx]
+      (let [body (get-in ctx [:response :body])]
+        (if (and (<= 200 (get-in ctx [:response :status]) 299)
+                 (map? body)
+                 (contains? body response-key))
+          (assoc-in ctx [:response :body]
+                    (get-in ctx [:response :body response-key]))
+          ctx)))}))
 
 (defn assoc-response [ctx status body]
   (assoc ctx :response {:status status
@@ -59,13 +72,16 @@
           (assoc-response ctx 500 {:message "Unknown auth error"}))))}))
 
 (defroutes routes
-  [[["/"
+  [[["/" {:get [:all-elections
+                (bifrost/interceptor
+                 channels/election-all 60000)]}
      ^:interceptors [(body-params)
                      (negotiate-response-content-type ["application/edn"
                                                        "application/transit+json"
                                                        "application/transit+msgpack"
                                                        "application/json"
-                                                       "text/plain"])]
+                                                       "text/plain"])
+                     (promote-to-body :elections)]
      ["/ping" {:get [:ping ping]}]
      ["/upcoming" ^:constraints {:district-divisions #".+"}
       {:get [:search-upcoming-by-district-divisions
@@ -75,29 +91,24 @@
                        [:query-params :district-divisions]
                        #(-> %
                             (str/split #",")
-                            vec))
-                      (promote-to-body :elections)]]
+                            vec))]]
      ["/upcoming" ^:constraints {:user-id #".+"}
       {:get [:search-upcoming-by-user-id
              (bifrost/interceptor
               channels/electorate-search-create 60000)]}
       ^:interceptors [(bifrost.i/update-in-request
                        [:query-params :user-id]
-                       #(when % (java.util.UUID/fromString %)))
-                      (promote-to-body :electorates)]]
+                       #(when % (UUID/fromString %)))
+                      (bifrost.i/update-in-response
+                       [:body :electorates]
+                       [:body :elections]
+                       identity)]]
      ["/upcoming"
       {:get [:all-upcoming
              (bifrost/interceptor
               channels/election-all-upcoming 60000)]}
       ^:interceptors [authorize-api-request
-                      strip-user-key
-                      (promote-to-body :elections)]]
-
-     ["/elections"
-      {:get [:all-elections
-             (bifrost/interceptor
-              channels/election-all 60000)]}
-      ^:interceptors [(promote-to-body :elections)]]]]])
+                      strip-user-key]]]]])
 
 (defn service []
   (let [allowed-origins (config [:server :allowed-origins])]
